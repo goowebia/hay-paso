@@ -1,9 +1,10 @@
 
 import React from 'react';
-import { UserReport, TrafficStatus } from '../types';
+import { UserReport, TrafficStatus } from '../types.ts';
 
 interface FeedItemProps {
   report: UserReport;
+  isAdmin: boolean;
 }
 
 const statusConfig: Record<TrafficStatus, { icon: string, color: string, bg: string, label: string }> = {
@@ -14,23 +15,22 @@ const statusConfig: Record<TrafficStatus, { icon: string, color: string, bg: str
   [TrafficStatus.CLOSURE]: { icon: 'fa-ban', color: 'text-red-600', bg: 'bg-red-600/10', label: 'Cierre' },
 };
 
-const FeedItem: React.FC<FeedItemProps> = ({ report }) => {
+const FeedItem: React.FC<FeedItemProps> = ({ report, isAdmin }) => {
   const config = statusConfig[report.status];
   
   const openMap = () => {
+    if (!isAdmin) return;
     if (report.coords) {
       const url = `https://www.google.com/maps/search/?api=1&query=${report.coords.lat},${report.coords.lng}`;
       window.open(url, '_blank');
     } else {
-      // Si no hay coordenadas, buscar por texto de ubicación
       const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(report.location + ' carretera Colima Guadalajara')}`;
       window.open(url, '_blank');
     }
   };
 
   return (
-    <div className="bg-zinc-950 rounded-lg overflow-hidden border border-zinc-900 mb-4 transition-all">
-      {/* Header */}
+    <div className="bg-zinc-950 rounded-lg overflow-hidden border border-zinc-900 mb-4 transition-all shadow-lg">
       <div className="p-3 flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <img 
@@ -60,7 +60,6 @@ const FeedItem: React.FC<FeedItemProps> = ({ report }) => {
         </div>
       </div>
 
-      {/* Media */}
       {report.mediaUrl && (
         <div className="relative aspect-video bg-zinc-900">
           {report.mediaType === 'video' ? (
@@ -71,20 +70,18 @@ const FeedItem: React.FC<FeedItemProps> = ({ report }) => {
         </div>
       )}
 
-      {/* Description */}
       <div className="p-3">
         <p className="text-sm text-zinc-200 leading-tight font-medium">
           {report.description}
         </p>
-        {report.coords && (
-          <div className="mt-2 flex items-center text-[9px] text-yellow-400/60 font-black uppercase tracking-widest">
+        {isAdmin && report.coords && (
+          <div className="mt-2 flex items-center text-[9px] text-yellow-400 font-black uppercase tracking-widest">
             <i className="fas fa-satellite mr-1"></i>
-            Ubicación GPS Verificada
+            Ubicación: {report.coords.lat.toFixed(4)}, {report.coords.lng.toFixed(4)}
           </div>
         )}
       </div>
 
-      {/* Footer / Actions */}
       <div className="px-3 pb-3 flex items-center justify-between text-zinc-500 pt-2">
         <div className="flex space-x-5">
           <button className="flex items-center space-x-1.5 hover:text-yellow-400 transition-colors">
@@ -96,13 +93,16 @@ const FeedItem: React.FC<FeedItemProps> = ({ report }) => {
             <span className="text-[10px] font-black">{report.comments}</span>
           </button>
         </div>
-        <button 
-          onClick={openMap}
-          className="text-[9px] font-black uppercase tracking-widest text-yellow-400 hover:text-white flex items-center bg-zinc-900 px-3 py-1 rounded-sm border border-zinc-800 active:scale-95 transition-all"
-        >
-          <i className="fas fa-location-dot mr-1 text-yellow-400"></i>
-          Ver Lugar
-        </button>
+        
+        {isAdmin && (
+          <button 
+            onClick={openMap}
+            className="text-[9px] font-black uppercase tracking-widest text-yellow-400 hover:text-white flex items-center bg-zinc-900 px-3 py-1 rounded-sm border border-zinc-800 active:scale-95 transition-all"
+          >
+            <i className="fas fa-location-dot mr-1 text-yellow-400"></i>
+            Ver Lugar
+          </button>
+        )}
       </div>
     </div>
   );

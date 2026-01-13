@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
-import Navigation from './components/Navigation';
-import FeedItem from './components/FeedItem';
-import ReportModal from './components/ReportModal';
-import TrafficMap from './components/TrafficMap';
-import { UserReport, TrafficStatus } from './types';
+import Navigation from './components/Navigation.tsx';
+import FeedItem from './components/FeedItem.tsx';
+import ReportModal from './components/ReportModal.tsx';
+import TrafficMap from './components/TrafficMap.tsx';
+import { UserReport, TrafficStatus } from './types.ts';
 
 const MOCK_REPORTS: UserReport[] = [
   {
@@ -52,6 +52,8 @@ const App: React.FC = () => {
   const [reports, setReports] = useState<UserReport[]>(MOCK_REPORTS);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminPass, setAdminPass] = useState('');
 
   const handleNewReport = (data: any) => {
     const newReport: UserReport = {
@@ -78,9 +80,18 @@ const App: React.FC = () => {
     }, 1000);
   };
 
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (adminPass === 'admin123') {
+      setIsAdmin(true);
+      setActiveTab('dashboard');
+    } else {
+      alert('Contraseña incorrecta');
+    }
+  };
+
   return (
     <div className="h-screen bg-black flex flex-col max-w-md mx-auto relative overflow-hidden shadow-2xl border-x border-zinc-900">
-      {/* Header */}
       <header className="flex-none bg-black/90 backdrop-blur-lg border-b-2 border-yellow-400 p-4 flex items-center justify-between z-30">
         <div className="flex items-center space-x-2">
           <div className="bg-yellow-400 p-1.5 rounded-sm">
@@ -91,15 +102,21 @@ const App: React.FC = () => {
             <span className="text-[10px] font-normal text-zinc-500 ml-1 not-italic lowercase">.mx</span>
           </h1>
         </div>
-        <button 
-          onClick={onRefresh}
-          className={`text-yellow-400 hover:text-white transition-all p-2 rounded-full hover:bg-zinc-900 ${isRefreshing ? 'animate-spin' : ''}`}
-        >
-          <i className="fas fa-rotate text-sm"></i>
-        </button>
+        <div className="flex items-center space-x-2">
+          {isAdmin && (
+            <span className="bg-yellow-400 text-black text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest mr-2">
+              ADMIN
+            </span>
+          )}
+          <button 
+            onClick={onRefresh}
+            className={`text-yellow-400 hover:text-white transition-all p-2 rounded-full hover:bg-zinc-900 ${isRefreshing ? 'animate-spin' : ''}`}
+          >
+            <i className="fas fa-rotate text-sm"></i>
+          </button>
+        </div>
       </header>
 
-      {/* Main Content Area */}
       <main className="flex-1 relative overflow-hidden flex flex-col">
         {activeTab === 'dashboard' && (
           <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4">
@@ -108,12 +125,12 @@ const App: React.FC = () => {
                 <i className="fas fa-tower-broadcast text-yellow-400 mr-2"></i>
                 En Vivo
               </h2>
-              <span className="text-[10px] text-yellow-400/70 uppercase tracking-widest font-black">Actualizado</span>
+              <span className="text-[10px] text-yellow-400/70 uppercase tracking-widest font-black">Público</span>
             </div>
 
             <div className="space-y-4">
               {reports.map((report) => (
-                <FeedItem key={report.id} report={report} />
+                <FeedItem key={report.id} report={report} isAdmin={isAdmin} />
               ))}
             </div>
           </div>
@@ -125,12 +142,60 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {activeTab !== 'dashboard' && activeTab !== 'maps' && (
+        {activeTab === 'profile' && (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 bg-black">
+            {isAdmin ? (
+              <div className="text-center space-y-6">
+                <div className="w-20 h-20 bg-yellow-400 rounded-full flex items-center justify-center mx-auto shadow-xl shadow-yellow-400/20">
+                  <i className="fas fa-user-shield text-3xl text-black"></i>
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-white uppercase tracking-tight">Administrador Activo</h3>
+                  <p className="text-zinc-500 text-xs mt-1">Ahora puedes ver las coordenadas exactas de cada reporte.</p>
+                </div>
+                <button 
+                  onClick={() => setIsAdmin(false)}
+                  className="bg-zinc-900 text-yellow-400 border border-yellow-400/30 px-6 py-3 rounded-sm font-black text-xs uppercase tracking-widest w-full"
+                >
+                  Cerrar Sesión
+                </button>
+              </div>
+            ) : (
+              <div className="w-full max-w-xs space-y-6">
+                <div className="text-center">
+                  <h3 className="text-xl font-black text-white uppercase tracking-tight italic">Acceso Admin</h3>
+                  <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest mt-2">Sólo personal autorizado</p>
+                </div>
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-yellow-400 uppercase tracking-widest">Contraseña</label>
+                    <input 
+                      type="password"
+                      value={adminPass}
+                      onChange={(e) => setAdminPass(e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-sm p-4 text-white focus:outline-none focus:border-yellow-400"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  <button 
+                    type="submit"
+                    className="w-full bg-yellow-400 text-black font-black py-4 rounded-sm uppercase tracking-widest text-xs"
+                  >
+                    Iniciar Sesión
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
+        )}
+
+        {(activeTab === 'alerts') && (
           <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 p-8 text-center space-y-4">
             <div className="w-16 h-16 bg-zinc-900 rounded-lg border-2 border-yellow-400/20 flex items-center justify-center mb-4">
-              <i className="fas fa-triangle-exclamation text-2xl text-yellow-400"></i>
+              <i className="fas fa-bell text-2xl text-yellow-400"></i>
             </div>
-            <h3 className="text-lg font-black text-zinc-300 uppercase">Sección en camino</h3>
+            <h3 className="text-lg font-black text-zinc-300 uppercase">Alertas</h3>
+            <p className="text-xs text-zinc-600 uppercase font-bold">Activa notificaciones pronto</p>
             <button 
               onClick={() => setActiveTab('dashboard')}
               className="bg-yellow-400 text-black px-6 py-2 rounded-sm font-black text-xs uppercase tracking-widest active:scale-95 transition-all"
@@ -141,12 +206,12 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Navigation */}
       <div className="flex-none">
         <Navigation 
           activeTab={activeTab} 
           onTabChange={setActiveTab} 
           onInformaClick={() => setIsReportModalOpen(true)}
+          isAdmin={isAdmin}
         />
       </div>
 

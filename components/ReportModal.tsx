@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { TrafficStatus } from '../types';
+import { TrafficStatus } from '../types.ts';
 
 interface ReportModalProps {
   isOpen: boolean;

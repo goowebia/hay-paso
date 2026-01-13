@@ -5,15 +5,16 @@ interface NavigationProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onInformaClick: () => void;
+  isAdmin?: boolean;
 }
 
-const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange, onInformaClick }) => {
+const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange, onInformaClick, isAdmin }) => {
   const tabs = [
     { id: 'dashboard', icon: 'fa-house', label: 'Inicio' },
     { id: 'maps', icon: 'fa-map-location-dot', label: 'Mapa' },
     { id: 'informa', icon: 'fa-plus', label: 'Informa', isAction: true },
     { id: 'alerts', icon: 'fa-bell', label: 'Alertas' },
-    { id: 'profile', icon: 'fa-user', label: 'Perfil' },
+    { id: 'profile', icon: isAdmin ? 'fa-user-shield' : 'fa-lock', label: isAdmin ? 'Admin' : 'Iniciar' },
   ];
 
   return (
