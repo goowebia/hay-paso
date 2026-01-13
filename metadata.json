@@ -1,0 +1,9 @@
+{
+  "name": "HayPaso - Tráfico Manzanillo-GDL",
+  "description": "Reportes de tráfico en tiempo real, accidentes y estado de la carretera Manzanillo - Guadalajara. Comunidad de conductores informando al momento.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
