@@ -6,43 +6,54 @@ interface FeedItemProps {
   report: UserReport;
 }
 
-const statusConfig: Record<TrafficStatus, { icon: string, color: string, label: string }> = {
-  [TrafficStatus.FLUID]: { icon: 'fa-circle-check', color: 'text-green-500', label: 'Paso Libre' },
-  [TrafficStatus.SLOW]: { icon: 'fa-gauge-simple-med', color: 'text-yellow-500', label: 'Tráfico Lento' },
-  [TrafficStatus.STALL]: { icon: 'fa-hourglass-half', color: 'text-orange-500', label: 'Parado / Fila' },
-  [TrafficStatus.ACCIDENT]: { icon: 'fa-car-burst', color: 'text-red-500', label: 'Accidente' },
-  [TrafficStatus.CLOSURE]: { icon: 'fa-ban', color: 'text-red-600', label: 'Cierre Total' },
+const statusConfig: Record<TrafficStatus, { icon: string, color: string, bg: string, label: string }> = {
+  [TrafficStatus.FLUID]: { icon: 'fa-circle-check', color: 'text-green-500', bg: 'bg-green-500/10', label: 'Libre' },
+  [TrafficStatus.SLOW]: { icon: 'fa-gauge-simple-med', color: 'text-yellow-400', bg: 'bg-yellow-400/10', label: 'Lento' },
+  [TrafficStatus.STALL]: { icon: 'fa-hourglass-half', color: 'text-orange-500', bg: 'bg-orange-500/10', label: 'Parado' },
+  [TrafficStatus.ACCIDENT]: { icon: 'fa-car-burst', color: 'text-red-500', bg: 'bg-red-500/10', label: 'Accidente' },
+  [TrafficStatus.CLOSURE]: { icon: 'fa-ban', color: 'text-red-600', bg: 'bg-red-600/10', label: 'Cierre' },
 };
 
 const FeedItem: React.FC<FeedItemProps> = ({ report }) => {
   const config = statusConfig[report.status];
   
+  const openMap = () => {
+    if (report.coords) {
+      const url = `https://www.google.com/maps/search/?api=1&query=${report.coords.lat},${report.coords.lng}`;
+      window.open(url, '_blank');
+    } else {
+      // Si no hay coordenadas, buscar por texto de ubicación
+      const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(report.location + ' carretera Colima Guadalajara')}`;
+      window.open(url, '_blank');
+    }
+  };
+
   return (
-    <div className="bg-slate-800/50 rounded-xl overflow-hidden border border-slate-700/50 mb-4 transition-all">
+    <div className="bg-zinc-950 rounded-lg overflow-hidden border border-zinc-900 mb-4 transition-all">
       {/* Header */}
       <div className="p-3 flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <img 
             src={report.userAvatar} 
             alt={report.userName} 
-            className="w-10 h-10 rounded-full border-2 border-indigo-500 shadow-lg"
+            className="w-10 h-10 rounded-sm border-2 border-yellow-400"
           />
           <div>
             <div className="flex items-center space-x-2">
-              <h3 className="font-bold text-sm text-slate-100">{report.userName}</h3>
+              <h3 className="font-black text-sm text-white uppercase tracking-tight">{report.userName}</h3>
               {report.isSocialMediaSource && (
-                <span className="bg-blue-600/20 text-blue-400 text-[10px] px-1.5 py-0.5 rounded-full border border-blue-500/30">
-                  <i className="fab fa-facebook mr-1"></i>FB Group
+                <span className="bg-yellow-400 text-black text-[9px] px-1.5 py-0.5 rounded-sm font-black border border-black uppercase">
+                  FB
                 </span>
               )}
             </div>
-            <p className="text-[10px] text-slate-400">
+            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
               {report.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {report.location}
             </p>
           </div>
         </div>
         <div className={`flex flex-col items-end`}>
-          <div className={`${config.color} flex items-center space-x-1 font-bold text-xs uppercase tracking-wider`}>
+          <div className={`${config.color} ${config.bg} flex items-center space-x-1.5 font-black text-[10px] uppercase tracking-widest px-2 py-1 rounded-sm border border-current opacity-90`}>
             <i className={`fas ${config.icon}`}></i>
             <span>{config.label}</span>
           </div>
@@ -51,7 +62,7 @@ const FeedItem: React.FC<FeedItemProps> = ({ report }) => {
 
       {/* Media */}
       {report.mediaUrl && (
-        <div className="relative aspect-video bg-slate-900 group">
+        <div className="relative aspect-video bg-zinc-900">
           {report.mediaType === 'video' ? (
             <video src={report.mediaUrl} className="w-full h-full object-cover" controls muted />
           ) : (
@@ -62,28 +73,35 @@ const FeedItem: React.FC<FeedItemProps> = ({ report }) => {
 
       {/* Description */}
       <div className="p-3">
-        <p className="text-sm text-slate-200 leading-relaxed italic">
-          "{report.description}"
+        <p className="text-sm text-zinc-200 leading-tight font-medium">
+          {report.description}
         </p>
+        {report.coords && (
+          <div className="mt-2 flex items-center text-[9px] text-yellow-400/60 font-black uppercase tracking-widest">
+            <i className="fas fa-satellite mr-1"></i>
+            Ubicación GPS Verificada
+          </div>
+        )}
       </div>
 
       {/* Footer / Actions */}
-      <div className="px-3 pb-3 flex items-center justify-between text-slate-400 border-t border-slate-700/30 pt-2">
-        <div className="flex space-x-4">
-          <button className="flex items-center space-x-1 hover:text-red-400 transition-colors">
+      <div className="px-3 pb-3 flex items-center justify-between text-zinc-500 pt-2">
+        <div className="flex space-x-5">
+          <button className="flex items-center space-x-1.5 hover:text-yellow-400 transition-colors">
             <i className="far fa-heart"></i>
-            <span className="text-xs">{report.likes}</span>
+            <span className="text-[10px] font-black">{report.likes}</span>
           </button>
-          <button className="flex items-center space-x-1 hover:text-indigo-400 transition-colors">
+          <button className="flex items-center space-x-1.5 hover:text-yellow-400 transition-colors">
             <i className="far fa-comment"></i>
-            <span className="text-xs">{report.comments}</span>
-          </button>
-          <button className="flex items-center space-x-1 hover:text-green-400 transition-colors">
-            <i className="far fa-share-square"></i>
+            <span className="text-[10px] font-black">{report.comments}</span>
           </button>
         </div>
-        <button className="text-[10px] bg-slate-700/50 hover:bg-slate-700 px-2 py-1 rounded-md transition-all">
-          Ver ubicación
+        <button 
+          onClick={openMap}
+          className="text-[9px] font-black uppercase tracking-widest text-yellow-400 hover:text-white flex items-center bg-zinc-900 px-3 py-1 rounded-sm border border-zinc-800 active:scale-95 transition-all"
+        >
+          <i className="fas fa-location-dot mr-1 text-yellow-400"></i>
+          Ver Lugar
         </button>
       </div>
     </div>

@@ -20,6 +20,10 @@ export interface UserReport {
   likes: number;
   comments: number;
   isSocialMediaSource?: boolean;
+  coords?: {
+    lat: number;
+    lng: number;
+  };
 }
 
 export interface RouteStatus {

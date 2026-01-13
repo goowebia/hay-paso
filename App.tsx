@@ -1,11 +1,10 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import Navigation from './components/Navigation';
 import FeedItem from './components/FeedItem';
 import ReportModal from './components/ReportModal';
 import TrafficMap from './components/TrafficMap';
 import { UserReport, TrafficStatus } from './types';
-import { summarizeTraffic } from './services/geminiService';
 
 const MOCK_REPORTS: UserReport[] = [
   {
@@ -18,7 +17,8 @@ const MOCK_REPORTS: UserReport[] = [
     status: TrafficStatus.SLOW,
     mediaUrl: 'https://picsum.photos/seed/truck/600/400',
     likes: 12,
-    comments: 3
+    comments: 3,
+    coords: { lat: 20.0123, lng: -103.5678 }
   },
   {
     id: 'fb-1',
@@ -31,7 +31,8 @@ const MOCK_REPORTS: UserReport[] = [
     mediaUrl: 'https://picsum.photos/seed/accident/600/400',
     likes: 45,
     comments: 21,
-    isSocialMediaSource: true
+    isSocialMediaSource: true,
+    coords: { lat: 20.1567, lng: -103.4890 }
   },
   {
     id: '2',
@@ -50,17 +51,7 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [reports, setReports] = useState<UserReport[]>(MOCK_REPORTS);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [aiSummary, setAiSummary] = useState('Cargando resumen de inteligencia artificial...');
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const fetchSummary = useCallback(async () => {
-    const summary = await summarizeTraffic(reports);
-    setAiSummary(summary);
-  }, [reports]);
-
-  useEffect(() => {
-    fetchSummary();
-  }, [fetchSummary]);
 
   const handleNewReport = (data: any) => {
     const newReport: UserReport = {
@@ -72,9 +63,10 @@ const App: React.FC = () => {
       description: data.description,
       status: data.status,
       mediaUrl: data.mediaUrl,
-      mediaType: 'image',
+      mediaType: data.mediaUrl?.includes('video') ? 'video' : 'image',
       likes: 0,
-      comments: 0
+      comments: 0,
+      coords: data.coords
     };
     setReports([newReport, ...reports]);
   };
@@ -83,83 +75,42 @@ const App: React.FC = () => {
     setIsRefreshing(true);
     setTimeout(() => {
       setIsRefreshing(false);
-      fetchSummary();
     }, 1000);
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col pb-24 max-w-md mx-auto relative overflow-x-hidden shadow-2xl">
+    <div className="h-screen bg-black flex flex-col max-w-md mx-auto relative overflow-hidden shadow-2xl border-x border-zinc-900">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-lg border-b border-slate-800 p-4 flex items-center justify-between">
+      <header className="flex-none bg-black/90 backdrop-blur-lg border-b-2 border-yellow-400 p-4 flex items-center justify-between z-30">
         <div className="flex items-center space-x-2">
-          <div className="bg-indigo-600 p-1.5 rounded-lg">
-            <i className="fas fa-road text-white"></i>
+          <div className="bg-yellow-400 p-1.5 rounded-sm">
+            <i className="fas fa-road text-black text-sm"></i>
           </div>
-          <h1 className="text-2xl font-black text-white italic tracking-tighter">
-            HAY<span className="text-indigo-500">PASO</span>
-            <span className="text-xs font-normal text-slate-500 ml-1 not-italic">.mx</span>
+          <h1 className="text-xl font-black text-white italic tracking-tighter uppercase">
+            HAY<span className="text-yellow-400">PASO</span>
+            <span className="text-[10px] font-normal text-zinc-500 ml-1 not-italic lowercase">.mx</span>
           </h1>
         </div>
         <button 
           onClick={onRefresh}
-          className={`text-slate-400 hover:text-white transition-all p-2 rounded-full hover:bg-slate-800 ${isRefreshing ? 'animate-spin text-indigo-400' : ''}`}
+          className={`text-yellow-400 hover:text-white transition-all p-2 rounded-full hover:bg-zinc-900 ${isRefreshing ? 'animate-spin' : ''}`}
         >
-          <i className="fas fa-rotate"></i>
+          <i className="fas fa-rotate text-sm"></i>
         </button>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 relative overflow-hidden flex flex-col">
         {activeTab === 'dashboard' && (
-          <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-6">
-            {/* AI Summary Box */}
-            <section className="bg-indigo-600/10 border border-indigo-500/30 rounded-2xl p-4 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-2 opacity-10 text-5xl translate-x-2 -translate-y-2">
-                <i className="fas fa-robot"></i>
-              </div>
-              <div className="flex items-center space-x-2 mb-2">
-                <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-                </span>
-                <h2 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Resumen Inteligente</h2>
-              </div>
-              <p className="text-sm font-medium text-slate-200 leading-relaxed">
-                {aiSummary}
-              </p>
-            </section>
-
-            {/* Status Grid */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl flex flex-col items-center justify-center space-y-1">
-                <span className="text-slate-400 text-[10px] uppercase font-bold">Tiempo Est.</span>
-                <span className="text-xl font-black text-white">3h 20m</span>
-                <span className="text-green-500 text-[10px] flex items-center font-bold">
-                  <i className="fas fa-arrow-down mr-1"></i> -10 min
-                </span>
-              </div>
-              <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl flex flex-col items-center justify-center space-y-1">
-                <span className="text-slate-400 text-[10px] uppercase font-bold">Alertas Activas</span>
-                <span className="text-xl font-black text-white">{reports.filter(r => r.status === TrafficStatus.ACCIDENT || r.status === TrafficStatus.CLOSURE).length}</span>
-                <span className="text-red-500 text-[10px] flex items-center font-bold">
-                  <i className="fas fa-triangle-exclamation mr-1"></i> Crítico
-                </span>
-              </div>
-            </div>
-
-            {/* Social Feed Title */}
-            <div className="flex items-center justify-between pt-2">
-              <h2 className="text-lg font-bold text-white flex items-center">
-                <i className="fas fa-users text-indigo-500 mr-2"></i>
-                Reportes en vivo
+          <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-black text-white uppercase flex items-center tracking-tight">
+                <i className="fas fa-tower-broadcast text-yellow-400 mr-2"></i>
+                En Vivo
               </h2>
-              <div className="flex space-x-1">
-                 <button className="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded-md font-bold hover:bg-slate-700">Recientes</button>
-                 <button className="text-[10px] bg-indigo-600/20 text-indigo-400 px-2 py-1 rounded-md font-bold">Cerca de ti</button>
-              </div>
+              <span className="text-[10px] text-yellow-400/70 uppercase tracking-widest font-black">Actualizado</span>
             </div>
 
-            {/* The Feed */}
             <div className="space-y-4">
               {reports.map((report) => (
                 <FeedItem key={report.id} report={report} />
@@ -169,44 +120,41 @@ const App: React.FC = () => {
         )}
 
         {activeTab === 'maps' && (
-          <div className="flex-1 flex flex-col">
+          <div className="absolute inset-0 flex flex-col">
             <TrafficMap />
           </div>
         )}
 
         {activeTab !== 'dashboard' && activeTab !== 'maps' && (
-          <div className="flex-1 flex flex-col items-center justify-center h-[70vh] text-slate-500 p-8 text-center space-y-4">
-            <div className="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center mb-4">
-              <i className="fas fa-tools text-3xl"></i>
+          <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 p-8 text-center space-y-4">
+            <div className="w-16 h-16 bg-zinc-900 rounded-lg border-2 border-yellow-400/20 flex items-center justify-center mb-4">
+              <i className="fas fa-triangle-exclamation text-2xl text-yellow-400"></i>
             </div>
-            <h3 className="text-xl font-bold text-slate-300">Sección en Construcción</h3>
-            <p className="text-sm">Estamos trabajando para integrar notificaciones avanzadas y perfil de usuario.</p>
+            <h3 className="text-lg font-black text-zinc-300 uppercase">Sección en camino</h3>
             <button 
               onClick={() => setActiveTab('dashboard')}
-              className="bg-slate-800 text-white px-6 py-2 rounded-full font-bold transition-all hover:bg-slate-700"
+              className="bg-yellow-400 text-black px-6 py-2 rounded-sm font-black text-xs uppercase tracking-widest active:scale-95 transition-all"
             >
-              Volver al Inicio
+              Volver
             </button>
           </div>
         )}
       </main>
 
-      {/* Floating Informa UI */}
-      <Navigation 
-        activeTab={activeTab} 
-        onTabChange={setActiveTab} 
-        onInformaClick={() => setIsReportModalOpen(true)}
-      />
+      {/* Navigation */}
+      <div className="flex-none">
+        <Navigation 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab} 
+          onInformaClick={() => setIsReportModalOpen(true)}
+        />
+      </div>
 
-      {/* Report Modal */}
       <ReportModal 
         isOpen={isReportModalOpen} 
         onClose={() => setIsReportModalOpen(false)} 
         onSubmit={handleNewReport}
       />
-
-      {/* Bottom spacing for iOS safe area */}
-      <div className="h-safe-area-bottom"></div>
     </div>
   );
 };
