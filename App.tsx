@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Navigation from './components/Navigation';
 import FeedItem from './components/FeedItem';
 import ReportModal from './components/ReportModal';
+import TrafficMap from './components/TrafficMap';
 import { UserReport, TrafficStatus } from './types';
 import { summarizeTraffic } from './services/geminiService';
 
@@ -87,7 +88,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col pb-24 max-w-md mx-auto relative overflow-x-hidden">
+    <div className="min-h-screen bg-slate-950 flex flex-col pb-24 max-w-md mx-auto relative overflow-x-hidden shadow-2xl">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-lg border-b border-slate-800 p-4 flex items-center justify-between">
         <div className="flex items-center space-x-2">
@@ -101,19 +102,19 @@ const App: React.FC = () => {
         </div>
         <button 
           onClick={onRefresh}
-          className={`text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}
+          className={`text-slate-400 hover:text-white transition-all p-2 rounded-full hover:bg-slate-800 ${isRefreshing ? 'animate-spin text-indigo-400' : ''}`}
         >
           <i className="fas fa-rotate"></i>
         </button>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto hide-scrollbar">
-        {activeTab === 'dashboard' ? (
-          <div className="p-4 space-y-6">
+      <main className="flex-1 flex flex-col overflow-hidden">
+        {activeTab === 'dashboard' && (
+          <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-6">
             {/* AI Summary Box */}
             <section className="bg-indigo-600/10 border border-indigo-500/30 rounded-2xl p-4 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-2 opacity-20 text-4xl">
+              <div className="absolute top-0 right-0 p-2 opacity-10 text-5xl translate-x-2 -translate-y-2">
                 <i className="fas fa-robot"></i>
               </div>
               <div className="flex items-center space-x-2 mb-2">
@@ -133,14 +134,14 @@ const App: React.FC = () => {
               <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl flex flex-col items-center justify-center space-y-1">
                 <span className="text-slate-400 text-[10px] uppercase font-bold">Tiempo Est.</span>
                 <span className="text-xl font-black text-white">3h 20m</span>
-                <span className="text-green-500 text-[10px] flex items-center">
+                <span className="text-green-500 text-[10px] flex items-center font-bold">
                   <i className="fas fa-arrow-down mr-1"></i> -10 min
                 </span>
               </div>
               <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl flex flex-col items-center justify-center space-y-1">
                 <span className="text-slate-400 text-[10px] uppercase font-bold">Alertas Activas</span>
-                <span className="text-xl font-black text-white">4</span>
-                <span className="text-red-500 text-[10px] flex items-center">
+                <span className="text-xl font-black text-white">{reports.filter(r => r.status === TrafficStatus.ACCIDENT || r.status === TrafficStatus.CLOSURE).length}</span>
+                <span className="text-red-500 text-[10px] flex items-center font-bold">
                   <i className="fas fa-triangle-exclamation mr-1"></i> Crítico
                 </span>
               </div>
@@ -165,16 +166,24 @@ const App: React.FC = () => {
               ))}
             </div>
           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-[70vh] text-slate-500 p-8 text-center space-y-4">
+        )}
+
+        {activeTab === 'maps' && (
+          <div className="flex-1 flex flex-col">
+            <TrafficMap />
+          </div>
+        )}
+
+        {activeTab !== 'dashboard' && activeTab !== 'maps' && (
+          <div className="flex-1 flex flex-col items-center justify-center h-[70vh] text-slate-500 p-8 text-center space-y-4">
             <div className="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center mb-4">
               <i className="fas fa-tools text-3xl"></i>
             </div>
             <h3 className="text-xl font-bold text-slate-300">Sección en Construcción</h3>
-            <p className="text-sm">Estamos trabajando para integrar el mapa interactivo y notificaciones avanzadas.</p>
+            <p className="text-sm">Estamos trabajando para integrar notificaciones avanzadas y perfil de usuario.</p>
             <button 
               onClick={() => setActiveTab('dashboard')}
-              className="bg-slate-800 text-white px-6 py-2 rounded-full font-bold"
+              className="bg-slate-800 text-white px-6 py-2 rounded-full font-bold transition-all hover:bg-slate-700"
             >
               Volver al Inicio
             </button>
